@@ -1,8 +1,8 @@
 <?php
 require_once "../core/dbconfig.php";
 
-if (isset($_POST["id"])) {
-    $id = intval($_POST["id"]);
+$id = isset($_POST["id"]) ? intval($_POST["id"]) : (isset($_GET["id"]) ? intval($_GET["id"]) : 0);
+if ($id > 0) {
     $conn->query("DELETE FROM shops WHERE id=$id");
     $conn->close();
 }

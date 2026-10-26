@@ -40,20 +40,23 @@ require_once 'core/dbconfig.php';
 $sql = "SELECT * FROM shops";
 $result = $conn->query($sql);
 
-if ($result->num_rows > 0) {
+if ($result !== false && $result->num_rows > 0) {
 
     while ($shop = $result->fetch_assoc()) {
 
-        $shopId = $shop['id'];
+        $shopId = intval($shop['id']);
 
-        echo "<h3>{$shop['shop_name']}</h3>";
-        echo "Owner: {$shop['owner_name']}<br>";
-        echo "Address: {$shop['address']}<br>";
-        echo "Contact: {$shop['contact_number']}<br><br>";
+        echo "<h3>" . htmlspecialchars($shop['shop_name']) . "</h3>";
+        echo "Owner: " . htmlspecialchars($shop['owner_name']) . "<br>";
+        echo "Address: " . htmlspecialchars($shop['address']) . "<br>";
+        echo "Contact: " . htmlspecialchars($shop['contact_number']) . "<br><br>";
 
         echo "
             <a href='shops/update.php?id=$shopId'>Edit Shop</a> |
-            <a href='shops/delete.php?id=$shopId'>Delete Shop</a>
+            <form action='shops/delete.php' method='POST' style='display:inline;'>
+                <input type='hidden' name='id' value='$shopId'>
+                <button type='submit' onclick=\"return confirm('Delete this shop?')\">Delete Shop</button>
+            </form>
             <br><br>
         ";
 
@@ -62,23 +65,26 @@ if ($result->num_rows > 0) {
         $menuSql = "SELECT * FROM menu_items WHERE shop_id = $shopId";
         $menuResult = $conn->query($menuSql);
 
-        if ($menuResult->num_rows > 0) {
+        if ($menuResult !== false && $menuResult->num_rows > 0) {
 
             echo "<ul>";
 
             while ($item = $menuResult->fetch_assoc()) {
 
+                $itemId = intval($item['id']);
+
                 echo "
                 <li>
-                    {$item['item_name']}
-                    - ₱{$item['price']}
-                    ({$item['category']})
+                    " . htmlspecialchars($item['item_name']) . "
+                    - ₱" . htmlspecialchars($item['price']) . "
+                    (" . htmlspecialchars($item['category']) . ")
 
-                    <a href='menu_items/update.php?id={$item['id']}'>Edit</a>
+                    <a href='menu_items/update.php?id=$itemId'>Edit</a>
 
-                    <a href='menu_items/delete.php?id={$item['id']}'>
-                        Delete
-                    </a>
+                    <form action='menu_items/delete.php' method='POST' style='display:inline;'>
+                        <input type='hidden' name='id' value='$itemId'>
+                        <button type='submit' onclick=\"return confirm('Delete this item?')\">Delete</button>
+                    </form>
                 </li>
                 ";
             }
@@ -101,29 +107,33 @@ if ($result->num_rows > 0) {
 <!-- ADD MENU ITEM -->
 <h2>Add Menu Item</h2>
 
-<form action="menu_items/insert.php" method="GET">
+<form action="menu_items/insert.php" method="POST">
 
-    <select name="shop_id">
-
+    <label>Shop:</label>
+    <select name="shop_id" required>
         <?php
 
         $shops = $conn->query("SELECT id, shop_name FROM shops");
 
-        while ($row = $shops->fetch_assoc()) {
-            echo "
-            <option value='{$row['id']}'>
-                {$row['shop_name']}
-            </option>
-            ";
+        if ($shops !== false) {
+            while ($row = $shops->fetch_assoc()) {
+                echo "
+                <option value='{$row['id']}'>
+                    " . htmlspecialchars($row['shop_name']) . "
+                </option>
+                ";
+            }
         }
 
         ?>
+    </select><br><br>
 
-    </select>
+    <label>Item Name: <input type="text" name="item_name" required></label><br><br>
+    <label>Price: <input type="number" step="0.01" name="price" required></label><br><br>
+    <label>Category: <input type="text" name="category" value="silog"></label><br><br>
+    <label>Description: <input type="text" name="description"></label><br><br>
 
-    <button type="submit">
-        Add Item
-    </button>
+    <button type="submit" name="add_item">Add Item</button>
 
 </form>
 
